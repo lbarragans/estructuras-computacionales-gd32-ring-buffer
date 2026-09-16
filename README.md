@@ -1,122 +1,66 @@
-# Exercise 07 - Ring buffer productor-consumidor en GD32VW553
+# Ejercicio 07 - Ring buffer productor-consumidor
 
 **Curso:** Estructuras Computacionales  
 **Autora:** Laura Daniela Barragan Silva  
-**Plataforma:** GD32VW553HMQ6/HMQ7  
-**Arquitectura:** Nuclei RISC-V RV32  
-**Entorno:** Visual Studio Code, CMake, Ninja, Nuclei RISC-V GCC y OpenOCD
+**Plataforma:** GD32VW553HMQ6/HMQ7, RISC-V RV32
 
-## 1. Proposito
+## Objetivo
 
-Este ejercicio implementa un **buffer circular FIFO** de ocho posiciones para
-comunicar un productor y un consumidor con velocidades diferentes. Cada dato
-incluye un numero de secuencia y el instante en que fue producido.
+Estudiar una FIFO circular de ocho elementos con productores y consumidores
+de distinta velocidad. Cada elemento conserva su secuencia y el instante de
+produccion para medir orden, ocupacion, desbordamientos y latencia.
 
-Se estudian:
+## Tres caminos
 
-- almacenamiento FIFO sin memoria dinamica;
-- indices `head` y `tail` con retorno circular;
-- estados vacio, parcial y lleno;
-- desbordamiento, subdesbordamiento y marca de ocupacion maxima;
-- latencia entre produccion y consumo;
-- separacion entre el modulo de datos y la aplicacion.
+| Camino | Archivos | Concepto |
+|---|---|---|
+| Referencia | `Src/main.c`, `Src/ring_buffer.c`, `Src/systimer.c` | FIFO circular C con planificacion temporal |
+| RISC-V puro | `Ensamblador_RISCV_Puro/main.S` | `head`, `tail`, `count`, push y pop en Assembly |
+| FreeRTOS puro | `FreeRTOS_Puro/main.c` | productor y consumidor comunicados por una cola FreeRTOS |
 
-## 2. Comportamiento esperado
+La referencia original permanece como compilacion principal de CMake. Las
+alternativas son independientes y no se compilan simultaneamente con `Src/`.
 
-El experimento repite tres fases de seis segundos:
+## Experimento
 
-| Fase | Productor | Consumidor | Efecto esperado |
-| --- | ---: | ---: | --- |
-| Equilibrada | 400 ms | 400 ms | Ocupacion baja, sin perdidas |
-| Sobrecarga | 100 ms | 500 ms | El buffer se llena y rechaza datos |
-| Drenaje | 800 ms | 100 ms | El consumidor vacia el buffer |
+| Fase de 6 s | Productor | Consumidor | Resultado esperado |
+|---|---:|---:|---|
+| Equilibrada | 400 ms | 400 ms | ocupacion baja |
+| Sobrecarga | 100 ms | 500 ms | cola llena y rechazos |
+| Drenaje | 800 ms | 100 ms | vaciado de la cola |
 
-El LED PC13 representa la ocupacion:
+PC13 permanece apagado con la cola vacia, encendido con ocupacion parcial y
+parpadea rapidamente cuando esta llena.
 
-| LED | Estado del buffer |
-| --- | --- |
-| Apagado | Vacio |
-| Encendido fijo | Parcialmente ocupado |
-| Parpadeo rapido | Lleno |
-
-En la fase equilibrada se observan pulsos breves porque el productor deposita
-un elemento y el consumidor lo retira poco despues. En sobrecarga el LED queda
-encendido y finalmente parpadea rapido. Durante el drenaje regresa a apagado.
-
-## 3. Arquitectura
-
-```mermaid
-flowchart LR
-    P["Productor"] -->|"push"| B["Ring buffer: 8 elementos"]
-    B -->|"pop"| C["Consumidor"]
-    T["SysTimer 1 ms"] --> P
-    T --> C
-    B --> L["Estado en LED PC13"]
-```
-
-## 4. Funcionamiento circular
-
-```mermaid
-flowchart LR
-    S0["0"] --> S1["1"] --> S2["2"] --> S3["..."] --> S7["7"]
-    S7 -->|"modulo 8"| S0
-```
-
-`head` indica donde escribe el proximo productor y `tail` donde lee el
-proximo consumidor. `count` distingue lleno de vacio incluso cuando los dos
-indices tienen el mismo valor.
-
-## 5. Estructura
+## Estructura
 
 ```text
 07_Ring_Buffer_Producer_Consumer/
-├── .vscode/
-├── Doc/
+├── Src/                         # referencia original
 ├── Inc/
-│   ├── gd32vw55x_libopt.h
-│   ├── ring_buffer.h
-│   └── systimer.h
-├── Src/
-│   ├── main.c
-│   ├── ring_buffer.c
-│   └── systimer.c
-├── cmake/
-├── tools/
+├── Ensamblador_RISCV_Puro/      # FIFO y aplicacion RV32 Assembly
+├── FreeRTOS_Puro/               # aplicacion basada en Queue
+├── Doc/
 ├── CMakeLists.txt
-└── CMakePresets.json
+└── README.md
 ```
 
-## 6. Preparacion rapida
+## Compilacion de la referencia
 
-1. Abra esta carpeta mediante `File > Open Folder` en VS Code.
-2. Acepte `Trust` si aparece el modo restringido.
-3. Duplique `tools/local_config.example.ps1`, nombre la copia
-   `local_config.ps1` y complete las tres rutas locales.
-4. Ejecute `Terminal > Run Task > 1. Verificar entorno GD32`.
-5. Ejecute `5. Compilar y programar GD32`.
-6. Ejecute una sola vez `6. Preparar depuracion`.
-7. Abra `Run and Debug`, seleccione el GD32 y pulse el boton verde.
+1. Copie `tools/local_config.example.ps1` como `tools/local_config.ps1`.
+2. Configure las rutas locales del SDK, toolchain y OpenOCD.
+3. Ejecute en VS Code `1. Verificar entorno GD32`.
+4. Ejecute `5. Compilar y programar GD32`.
+5. Para depurar, ejecute una vez `6. Preparar depuracion`.
 
-El estudiante trabaja mediante tareas de VS Code; no necesita escribir
-comandos PowerShell.
+## Estado
 
-## 7. Variables principales
+| Implementacion | Estado |
+|---|---|
+| Referencia C | funcional y seleccionada por CMake |
+| Assembly puro | fuente lista; integracion y placa pendientes |
+| FreeRTOS puro | fuente lista; kernel, port e integracion pendientes |
 
-```text
-g_ring_buffer
-g_ring_buffer.storage
-g_ring_buffer.head
-g_ring_buffer.tail
-g_ring_buffer.count
-g_ring_buffer.high_watermark
-g_ring_buffer.overflows
-g_ring_buffer.underflows
-g_phase
-g_last_produced_sequence
-g_last_consumed_sequence
-g_last_latency_ms
-g_sequence_errors
-```
-
-El repositorio excluye `build/`, rutas personales, el SDK, el compilador,
-OpenOCD, `tools/local_config.ps1` y `.vscode/launch.json`.
+Consulte `Doc/6_VARIANTES_DEL_EJERCICIO.md` y
+`Doc/7_PLAN_DE_VALIDACION.md`. Ninguna alternativa se declara validada en
+hardware hasta compilarla y probarla sobre la placa.
