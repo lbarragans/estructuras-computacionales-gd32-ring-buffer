@@ -1,5 +1,9 @@
 #include <stdint.h>
 
+#include "app_cfg.h"
+#include "gd32vw55x_platform.h"
+#include "wrapper_os.h"
+
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "task.h"
@@ -46,7 +50,7 @@ static void led_init(void)
                   LED_GPIO_PIN);
     gpio_output_options_set(LED_GPIO_PORT, GPIO_OTYPE_PP,
                             GPIO_OSPEED_10MHZ, LED_GPIO_PIN);
-    gpio_bit_set(LED_GPIO_PORT, LED_GPIO_PIN);
+    gpio_bit_reset(LED_GPIO_PORT, LED_GPIO_PIN);
 }
 
 static void led_set(uint8_t turn_on)
@@ -57,9 +61,9 @@ static void led_set(uint8_t turn_on)
         return;
     }
     if (state != 0U) {
-        gpio_bit_reset(LED_GPIO_PORT, LED_GPIO_PIN);
-    } else {
         gpio_bit_set(LED_GPIO_PORT, LED_GPIO_PIN);
+    } else {
+        gpio_bit_reset(LED_GPIO_PORT, LED_GPIO_PIN);
     }
     g_led_is_on = state;
 }
@@ -182,6 +186,8 @@ static void led_task(void *argument)
 
 int main(void)
 {
+    sys_os_init();
+    platform_init();
     led_init();
     item_queue = xQueueCreate(QUEUE_CAPACITY, sizeof(queue_item_t));
 
@@ -190,16 +196,30 @@ int main(void)
         }
     }
 
-    (void)xTaskCreate(producer_task, "Producer", configMINIMAL_STACK_SIZE,
-                      NULL, tskIDLE_PRIORITY + 2U, NULL);
-    (void)xTaskCreate(consumer_task, "Consumer", configMINIMAL_STACK_SIZE,
-                      NULL, tskIDLE_PRIORITY + 2U, NULL);
-    (void)xTaskCreate(phase_task, "Phase", configMINIMAL_STACK_SIZE,
-                      NULL, tskIDLE_PRIORITY + 3U, NULL);
-    (void)xTaskCreate(led_task, "LED", configMINIMAL_STACK_SIZE,
-                      NULL, tskIDLE_PRIORITY + 1U, NULL);
+    BaseType_t producer_ok = xTaskCreate(
+        producer_task, "Producer", configMINIMAL_STACK_SIZE,
+        NULL, tskIDLE_PRIORITY + 2U, NULL
+    );
+    BaseType_t consumer_ok = xTaskCreate(
+        consumer_task, "Consumer", configMINIMAL_STACK_SIZE,
+        NULL, tskIDLE_PRIORITY + 2U, NULL
+    );
+    BaseType_t phase_ok = xTaskCreate(
+        phase_task, "Phase", configMINIMAL_STACK_SIZE,
+        NULL, tskIDLE_PRIORITY + 3U, NULL
+    );
+    BaseType_t led_ok = xTaskCreate(
+        led_task, "LED", configMINIMAL_STACK_SIZE,
+        NULL, tskIDLE_PRIORITY + 1U, NULL
+    );
 
-    vTaskStartScheduler();
+    if ((producer_ok != pdPASS) || (consumer_ok != pdPASS) ||
+        (phase_ok != pdPASS) || (led_ok != pdPASS)) {
+        for (;;) {
+        }
+    }
+
+    sys_os_start();
     for (;;) {
     }
 }

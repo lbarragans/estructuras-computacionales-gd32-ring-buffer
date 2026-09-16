@@ -29,7 +29,7 @@
     .global main
     .type main, @function
 main:
-    /* GPIOC/PC13, LED activo en bajo e inicialmente apagado. */
+    /* GPIOC/PC13, LED activo en alto e inicialmente apagado. */
     li      t0, RCU_AHB1EN
     lw      t1, 0(t0)
     ori     t1, t1, GPIOC_CLOCK_BIT
@@ -63,7 +63,7 @@ main:
     not     t2, t2
     and     t1, t1, t2
     sw      t1, 0(t0)
-    li      t0, GPIOC_BOP
+    li      t0, GPIOC_BC
     li      t1, PC13_BIT
     sw      t1, 0(t0)
 
@@ -337,7 +337,7 @@ led_status_update:
     la      t0, g_led_is_on
     sb      zero, 0(t0)
 .Lled_hw_off:
-    li      t0, GPIOC_BOP
+    li      t0, GPIOC_BC
     li      t1, PC13_BIT
     sw      t1, 0(t0)
     ret
@@ -346,7 +346,7 @@ led_status_update:
     li      t1, 1
     sb      t1, 0(t0)
 .Lled_hw_on:
-    li      t0, GPIOC_BC
+    li      t0, GPIOC_BOP
     li      t1, PC13_BIT
     sw      t1, 0(t0)
 .Lled_return:

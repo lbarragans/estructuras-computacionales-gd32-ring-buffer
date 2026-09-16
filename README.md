@@ -29,7 +29,7 @@ alternativas son independientes y no se compilan simultaneamente con `Src/`.
 | Sobrecarga | 100 ms | 500 ms | cola llena y rechazos |
 | Drenaje | 800 ms | 100 ms | vaciado de la cola |
 
-PC13 permanece apagado con la cola vacia, encendido con ocupacion parcial y
+En la placa validada, PC13 es activo en alto: permanece apagado con la cola vacia, encendido con ocupacion parcial y
 parpadea rapidamente cuando esta llena.
 
 ## Estructura
@@ -57,10 +57,33 @@ parpadea rapidamente cuando esta llena.
 
 | Implementacion | Estado |
 |---|---|
-| Referencia C | funcional y seleccionada por CMake |
-| Assembly puro | fuente lista; integracion y placa pendientes |
-| FreeRTOS puro | fuente lista; kernel, port e integracion pendientes |
+| Referencia C | integrada para compilar y grabar |
+| Assembly puro | integrada para compilar y grabar |
+| FreeRTOS puro | integrada con FreeRTOS oficial del MSDK V1.0.3g |
 
 Consulte `Doc/6_VARIANTES_DEL_EJERCICIO.md` y
 `Doc/7_PLAN_DE_VALIDACION.md`. Ninguna alternativa se declara validada en
 hardware hasta compilarla y probarla sobre la placa.
+
+## Ejecutar las variantes
+
+Referencia original por JTAG/OpenOCD:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\\tools\\build_variant.ps1 -Variant original -Flash
+```
+
+Assembly puro por JTAG/OpenOCD:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\\tools\\build_variant.ps1 -Variant assembly -Flash
+```
+
+Desde VS Code use **Terminal > Run Task** y elija `Build + Flash Original`,
+`Build + Flash Assembly` o `Build + Flash FreeRTOS`. FreeRTOS se integra
+automaticamente con el MSDK V1.0.3g.
+
+## Guía central de ejecución
+
+Use la [guía central GD32VW553](https://github.com/lbarragans/gd32vw553-vscode-cmake-guide)
+para ejecutar de manera controlada la referencia, Assembly y FreeRTOS.

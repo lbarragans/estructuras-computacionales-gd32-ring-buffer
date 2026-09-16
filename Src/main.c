@@ -57,7 +57,7 @@ static void led_init(void)
                   GPIO_PUPD_NONE, LED_GPIO_PIN);
     gpio_output_options_set(LED_GPIO_PORT, GPIO_OTYPE_PP,
                             GPIO_OSPEED_10MHZ, LED_GPIO_PIN);
-    gpio_bit_set(LED_GPIO_PORT, LED_GPIO_PIN);
+    gpio_bit_reset(LED_GPIO_PORT, LED_GPIO_PIN);
 }
 
 static void led_set(uint8_t turn_on)
@@ -68,11 +68,11 @@ static void led_set(uint8_t turn_on)
         return;
     }
 
-    /* El LED de la placa es activo en nivel bajo. */
+    /* En la placa probada PC13 en alto enciende el LED. */
     if (requested_state != 0U) {
-        gpio_bit_reset(LED_GPIO_PORT, LED_GPIO_PIN);
-    } else {
         gpio_bit_set(LED_GPIO_PORT, LED_GPIO_PIN);
+    } else {
+        gpio_bit_reset(LED_GPIO_PORT, LED_GPIO_PIN);
     }
 
     g_led_is_on = requested_state;

@@ -11,4 +11,8 @@ rechazo/lectura y representacion de ocupacion mediante PC13.
 | `phase_task` | cambiar de fase cada 6000 ms |
 | `led_task` | representar la ocupacion de la Queue |
 
-Requiere kernel, port RISC-V, heap, `FreeRTOSConfig.h` y tick funcional.
+Se ejecuta como aplicacion del MSDK V1.0.3g para usar kernel, port
+Nuclei/ECLIC, heap y tick oficiales.
+
+Desde VS Code ejecute **Terminal > Run Task > Build + Flash FreeRTOS**. La
+salida visible recorre equilibrio, sobrecarga y drenaje cada 6 segundos.
